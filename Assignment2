@@ -1,0 +1,104 @@
+---
+title: "Steak Survey"
+author: "Alberta Hardiman"
+date: "2024-02-10"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(dplyr)
+library(knitr)
+library(rmarkdown)
+```
+
+## Section 1: Description of the data.
+
+The dataset I’m using measures how Americans consume and order their steak–along with questions on their thoughts and past behavior. It was collected through surveymonkey, approximately in 2014,  and in a fixed-width csv format. 
+
+The research questions I’m interested in is to understand the relationship between people who eat steak and their demographic background.
+
+There are 551 observations (including top row) in the dataset and 15 variables total (including 1 variable on auto-generated respondent ID). Each row contains responses from 1 user and each column contains their response on specific questions.
+
+## Section 2: reading the data into R.
+``` {r, echo = TRUE}
+url <- "https://raw.githubusercontent.com/fivethirtyeight/data/master/steak-survey/steak-risk-survey.csv"
+steak_survey <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/steak-survey/steak-risk-survey.csv")
+
+```
+## Section 3: Clean the data. 
+```{r, echo = TRUE}
+##Filtering the demographic data.
+steak_survey_demographic <- steak_survey %>% 
+  select((ncol(steak_survey)-4):ncol(steak_survey))
+
+##Filtering the people who eat steak
+names(steak_survey)
+steak_yes <- steak_survey %>%
+  filter(`Do.you.eat.steak.` == 'Yes')
+
+##Transforming qualitative values to numerical values
+steak_survey <- steak_survey %>%
+  mutate(`Do.you.eat.steak.` = case_when(
+    `Do.you.eat.steak.` == "Yes" ~ 1,
+    `Do.you.eat.steak.` == "No" ~ 0,
+  ))
+
+steak_survey <- steak_survey %>%
+  filter(!is.na(`How.do.you.like.your.steak.prepared.`)) %>%
+  mutate(`How.do.you.like.your.steak.prepared.` = case_when(
+    `How.do.you.like.your.steak.prepared.` == "Rare" ~ 1,
+    `How.do.you.like.your.steak.prepared.` == "Medium rare" ~ 2,
+    `How.do.you.like.your.steak.prepared.` == "Medium" ~ 3,
+    `How.do.you.like.your.steak.prepared.` == "Medium well" ~ 4,
+    `How.do.you.like.your.steak.prepared.` == "Well" ~ 5,
+    TRUE ~ NA_integer_
+  ))
+
+
+steak_survey <- steak_survey %>%
+  filter(!is.na(Gender)) %>%
+  mutate(Gender = case_when(
+    Gender == "Male" ~ 0L,
+    Gender == "Female" ~ 1L,
+    TRUE ~ NA_integer_
+  ))
+```
+
+This dataset has `r nrow(steak_survey)` rows and `r ncol(steak_survey)` columns. The names of the columns and a brief description of each are in the table below:
+
+## Section 4: Characteristics of the data.
+```{r, echo=TRUE}
+
+tldr <- summary(steak_survey)
+tldr
+
+rowtotal <- nrow(steak_survey)
+coltotal <- ncol(steak_survey)
+
+coltable <- data.frame( 
+  `Column Number` = 1:4,
+  `Column Name` = c("Do.you.eat.steak.", "Household.Income", "Age", "Location..Census.Region."),
+  `Description` = c("If respondent eat steak",
+                    "The respondent's income",
+                    "Age of the respondent",
+                    "Location of the respondent")
+)
+coltable
+
+kable(coltable, caption = "Steak consumption and demographic data")
+```
+## Section 5: Subset and Summary
+
+```{r summary-section, echo=TRUE}
+
+#Picking 3 columns
+three_col <- select(steak_survey, `Do.you.eat.steak.`, `How.do.you.like.your.steak.prepared.`, Gender)
+
+
+#Getting summary of the subset of the data
+    
+summarytable<-summary(three_col)
+print(summarytable)
+```
